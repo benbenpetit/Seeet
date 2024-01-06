@@ -14,6 +14,7 @@ const App = () => {
   const [deck, setDeck] = useState<ICard[]>([])
   const [placedCards, setPlacedCards] = useState<ICard[]>([])
   const [selectedCards, setSelectedCards] = useState<ICard[]>([])
+  const [doneSets, setDoneSets] = useState(0)
 
   useEffect(() => {
     setDeck(shuffle(ALL_CARDS))
@@ -37,8 +38,8 @@ const App = () => {
       }
     } else if (length <= 12) {
       return {
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gridTemplateRows: 'repeat(3, 1fr)',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateRows: 'repeat(4, 1fr)',
       }
     } else if (length <= 15) {
       return {
@@ -106,11 +107,21 @@ const App = () => {
     if (selectedCards.length === 3) {
       const isSet = getIsSet(selectedCards)
 
-      setTimeout(() => {
-        setSelectedCards([])
-      }, 300)
+      if (isSet) {
+        setTimeout(() => {
+          setPlacedCards(
+            placedCards.filter((card) => !selectedCards.includes(card))
+          )
+          setDoneSets(isSet ? doneSets + 1 : doneSets)
+          setSelectedCards([])
+        }, 500)
+      } else {
+        setTimeout(() => {
+          setSelectedCards([])
+        }, 300)
+      }
     }
-  }, [selectedCards])
+  }, [selectedCards, placedCards, doneSets])
 
   return (
     <div className="wrapper">
@@ -135,8 +146,14 @@ const App = () => {
         </div>
       </main>
       <header>
-        <button onClick={addThreeCardsToBoard}>
+        <button
+          className="add-cards --clickable"
+          onClick={addThreeCardsToBoard}
+        >
           <span>Add 3 cards</span>
+        </button>
+        <button className="points">
+          <span>Set: {doneSets}</span>
         </button>
       </header>
     </div>

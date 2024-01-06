@@ -25,21 +25,30 @@ header {
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  column-gap: 12px;
 
   button {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #fff;
     border-radius: 9999px;
-    padding: 16px 26px;
+    padding: clamp(10px, 2.5vh, 12px) clamp(18px, 4vh, 26px);
+    font-size: clamp(14px, 2.5vh, 18px);
+    cursor: auto;
     transition: background-color 0.225s cubic-bezier(0.4, 0, 0, 1);
 
-    &:hover {
-      background-color: #f9f6ff;
+    &.--clickable {
+      cursor: pointer;
 
-      &::before {
-        border-width: 2px;
+      &:hover {
+        background-color: #f9f6ff;
+
+        &::before {
+          opacity: 1;
+        }
       }
     }
 
@@ -50,15 +59,10 @@ header {
       left: 0;
       width: 100%;
       height: 100%;
+      opacity: 0;
       border-radius: inherit;
-      border-color: #9114ff;
-      border-style: solid;
-      border-width: 0px;
-      transition: border-width 0.125s cubic-bezier(0.4, 0, 0, 1);
-    }
-
-    span {
-      font-size: 18px;
+      border: 2px solid #9114ff;
+      transition: opacity 0.325s cubic-bezier(0.4, 0, 0, 1);
     }
   }
 }
@@ -73,19 +77,20 @@ main {
 }
 
 .board {
-  width: 100%;
+  width: 90%;
   display: grid;
   justify-content: center;
   align-items: center;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  gap: 2vh;
+  padding-bottom: calc(16px + 2 * clamp(10px, 2.5vh, 16px));
 }
 
 .card {
   justify-self: center;
   width: 100%;
   height: auto;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 3 / 1.75;
   background-color: #fff;
   border-radius: 14px;
   box-shadow: 0 1px 4px 2px rgba(0, 0, 0, 0.1);
