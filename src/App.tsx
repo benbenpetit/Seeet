@@ -1,10 +1,14 @@
 import { ICard } from '@/core/types/Card'
 import '@/styles/main.scss'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ALL_CARDS } from '@/core/data/cards'
 import shuffle from 'lodash.shuffle'
 import isEqual from 'lodash.isequal'
 import Card from '@/components/Card'
+import setImg from '@/assets/img/set.png'
+import gsap from 'gsap'
+import animationData from '@/assets/lottie/explosion.json'
+import { Player } from '@lottiefiles/react-lottie-player'
 
 const FILLINGS: ICard['filling'][] = ['SOLID', 'STRIPED', 'EMPTY']
 const COLORS: ICard['color'][] = ['GREEN', 'PURPLE', 'RED']
@@ -15,9 +19,17 @@ const App = () => {
   const [placedCards, setPlacedCards] = useState<ICard[]>([])
   const [selectedCards, setSelectedCards] = useState<ICard[]>([])
   const [doneSets, setDoneSets] = useState(0)
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
+  const pointsRef = useRef(null)
+  const lottieRef = useRef<any>(null)
 
   useEffect(() => {
-    setDeck(shuffle(ALL_CARDS))
+    setDeck(() => {
+      const shuffledCards = shuffle(ALL_CARDS)
+      setPlacedCards(shuffledCards.splice(0, 3))
+      return shuffledCards
+    })
   }, [])
 
   const getGridStyling = (length: number) => {
@@ -104,6 +116,20 @@ const App = () => {
   }
 
   useEffect(() => {
+    window.addEventListener('mousemove', (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY })
+    })
+
+    return () => {
+      window.removeEventListener('mousemove', () => {})
+    }
+  }, [])
+
+  useEffect(() => {
+    setCursorPos(mousePos)
+  }, [doneSets])
+
+  useEffect(() => {
     if (selectedCards.length === 3) {
       const isSet = getIsSet(selectedCards)
 
@@ -112,8 +138,23 @@ const App = () => {
           setPlacedCards(
             placedCards.filter((card) => !selectedCards.includes(card))
           )
+
           setDoneSets(isSet ? doneSets + 1 : doneSets)
           setSelectedCards([])
+          lottieRef.current?.play()
+          gsap.fromTo(
+            pointsRef.current,
+            {
+              scale: 1,
+            },
+            {
+              scale: 1.1,
+              duration: 0.2,
+              repeat: 1,
+              yoyo: true,
+              ease: 'power2.out',
+            }
+          )
         }, 500)
       } else {
         setTimeout(() => {
@@ -132,7 +173,7 @@ const App = () => {
         >
           {placedCards.map((card, index) => (
             <Card
-              key={`${card.filling}-${card.shape}-${card.color}-${index}`}
+              key={index}
               card={card}
               onClick={() => handleCardClick(card)}
               isSelected={selectedCards.includes(card)}
@@ -152,10 +193,25 @@ const App = () => {
         >
           <span>Add 3 cards</span>
         </button>
-        <button className="points">
-          <span>Set: {doneSets}</span>
+        <button className="points" ref={pointsRef}>
+          <img src={setImg} />
+          <span>{doneSets}</span>
         </button>
       </header>
+      <div
+        className="cursor"
+        style={{
+          transform: `translate3d(calc(${cursorPos.x}px - 50%), calc(${cursorPos.y}px - 50%), 0)`,
+        }}
+      >
+        <Player
+          ref={lottieRef}
+          autoplay={false}
+          loop={false}
+          src={animationData}
+          style={{ width: 200, height: 200 }}
+        />
+      </div>
     </div>
   )
 }
