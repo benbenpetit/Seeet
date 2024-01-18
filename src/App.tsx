@@ -6,6 +6,7 @@ import shuffle from 'lodash.shuffle'
 import isEqual from 'lodash.isequal'
 import Card from '@/components/Card'
 import setImg from '@/assets/img/set.png'
+import reloadImg from '@/assets/img/reload.svg'
 import gsap from 'gsap'
 import animationData from '@/assets/lottie/explosion.json'
 import { Player } from '@lottiefiles/react-lottie-player'
@@ -24,13 +25,36 @@ const App = () => {
   const pointsRef = useRef(null)
   const lottieRef = useRef<any>(null)
 
+  const init = () => {
+    setDeck([])
+    setPlacedCards([])
+    setDoneSets(0)
+    setTimeout(() => {
+      setDeck(() => {
+        const shuffledCards = shuffle(ALL_CARDS)
+        setPlacedCards(shuffledCards.splice(0, 3))
+        return shuffledCards
+      })
+    }, 100)
+  }
+
   useEffect(() => {
-    setDeck(() => {
-      const shuffledCards = shuffle(ALL_CARDS)
-      setPlacedCards(shuffledCards.splice(0, 3))
-      return shuffledCards
-    })
+    init()
   }, [])
+
+  const isThereASet = (cards: ICard[]) => {
+    for (let i = 0; i < cards.length; i++) {
+      for (let j = i + 1; j < cards.length; j++) {
+        for (let k = j + 1; k < cards.length; k++) {
+          if (getIsSet([cards[i], cards[j], cards[k]])) {
+            return true
+          }
+        }
+      }
+    }
+
+    return false
+  }
 
   const getGridStyling = (length: number) => {
     if (length <= 3) {
@@ -188,14 +212,24 @@ const App = () => {
       </main>
       <header>
         <button
-          className="add-cards --clickable"
-          onClick={addThreeCardsToBoard}
+          className="--clickable"
+          onClick={() => {
+            init()
+          }}
         >
+          <img src={reloadImg} alt="Reload circle" />
+        </button>
+        <button className="--clickable" onClick={addThreeCardsToBoard}>
           <span>Add 3 cards</span>
         </button>
         <button className="points" ref={pointsRef}>
           <img src={setImg} />
           <span>{doneSets}</span>
+        </button>
+        <button className="points" ref={pointsRef}>
+          <span>
+            {isThereASet(placedCards) ? 'Seeet présent' : 'Aucun Seeet présent'}
+          </span>
         </button>
       </header>
       <div
