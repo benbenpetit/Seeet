@@ -1,20 +1,29 @@
 import { ICard } from '@/core/types/Card'
 import '@/styles/main.scss'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, useEffect, useRef, useState } from 'react'
 import { ALL_CARDS } from '@/core/data/cards'
 import shuffle from 'lodash.shuffle'
-import isEqual from 'lodash.isequal'
 import Card from '@/components/Card'
 import setImg from '@/assets/img/set.png'
 import reloadImg from '@/assets/img/reload.svg'
-import gsap from 'gsap'
+import soundOnImg from '@/assets/img/sound_on.svg'
+import soundOffImg from '@/assets/img/sound_off.svg'
 import animationData from '@/assets/lottie/explosion.json'
-import { Player } from '@lottiefiles/react-lottie-player'
 import clsx from 'clsx'
+import isEqual from 'lodash.isequal'
+import { Howl } from 'howler'
+import selectCardSoundSrc from '@/assets/sounds/select-card.mp3'
+import winSeeetSoundSrc from '@/assets/sounds/win-seeet.mp3'
 
 const FILLINGS: ICard['filling'][] = ['SOLID', 'STRIPED', 'EMPTY']
 const COLORS: ICard['color'][] = ['GREEN', 'PURPLE', 'RED']
 const SHAPES: ICard['shape'][] = ['OVAL', 'LOZENGE', 'WAVE']
+
+const LazyPlayer = lazy(() =>
+  import('@lottiefiles/react-lottie-player').then(({ Player }) => ({
+    default: Player,
+  }))
+)
 
 const App = () => {
   const [deck, setDeck] = useState<ICard[]>([])
@@ -26,6 +35,17 @@ const App = () => {
   const pointsRef = useRef(null)
   const lottieRef = useRef<any>(null)
   const [isDisabledHint, setIsDisabledHint] = useState(false)
+  const [isSoundOn, setIsSoundOn] = useState(true)
+
+  const selectCardSoundRef = new Howl({
+    src: [selectCardSoundSrc],
+    volume: 0.1,
+  })
+
+  const winSeeetSoundRef = new Howl({
+    src: [winSeeetSoundSrc],
+    volume: 0.4,
+  })
 
   const init = () => {
     setDeck([])
@@ -93,6 +113,9 @@ const App = () => {
   }
 
   const handleCardClick = (card: ICard) => {
+    if (isSoundOn) {
+      selectCardSoundRef.play()
+    }
     if (selectedCards.includes(card)) {
       setSelectedCards(selectedCards.filter((c) => c !== card))
     } else {
@@ -155,38 +178,45 @@ const App = () => {
     setCursorPos(mousePos)
   }, [doneSets])
 
+  const handleSet = async () => {
+    const isSet = getIsSet(selectedCards)
+
+    if (isSet) {
+      const { gsap } = await import('gsap')
+      setTimeout(() => {
+        setPlacedCards(
+          placedCards.filter((card) => !selectedCards.includes(card))
+        )
+        setDoneSets(isSet ? doneSets + 1 : doneSets)
+        setSelectedCards([])
+        if (isSoundOn) {
+          winSeeetSoundRef.play()
+        }
+        lottieRef.current?.play()
+        gsap.fromTo(
+          pointsRef.current,
+          {
+            scale: 1,
+          },
+          {
+            scale: 1.1,
+            duration: 0.2,
+            repeat: 1,
+            yoyo: true,
+            ease: 'power2.out',
+          }
+        )
+      }, 500)
+    } else {
+      setTimeout(() => {
+        setSelectedCards([])
+      }, 300)
+    }
+  }
+
   useEffect(() => {
     if (selectedCards.length === 3) {
-      const isSet = getIsSet(selectedCards)
-
-      if (isSet) {
-        setTimeout(() => {
-          setPlacedCards(
-            placedCards.filter((card) => !selectedCards.includes(card))
-          )
-
-          setDoneSets(isSet ? doneSets + 1 : doneSets)
-          setSelectedCards([])
-          lottieRef.current?.play()
-          gsap.fromTo(
-            pointsRef.current,
-            {
-              scale: 1,
-            },
-            {
-              scale: 1.1,
-              duration: 0.2,
-              repeat: 1,
-              yoyo: true,
-              ease: 'power2.out',
-            }
-          )
-        }, 500)
-      } else {
-        setTimeout(() => {
-          setSelectedCards([])
-        }, 300)
-      }
+      handleSet()
     }
   }, [selectedCards, placedCards, doneSets])
 
@@ -241,6 +271,14 @@ const App = () => {
               : 'No Seeet found'}
           </span>
         </button>
+        <button
+          className="--clickable"
+          onClick={() => {
+            setIsSoundOn(!isSoundOn)
+          }}
+        >
+          <img src={isSoundOn ? soundOnImg : soundOffImg} alt="Sound" />
+        </button>
       </header>
       <div
         className="cursor"
@@ -248,7 +286,7 @@ const App = () => {
           transform: `translate3d(calc(${cursorPos.x}px - 50%), calc(${cursorPos.y}px - 50%), 0)`,
         }}
       >
-        <Player
+        <LazyPlayer
           ref={lottieRef}
           autoplay={false}
           loop={false}
