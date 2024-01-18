@@ -6,7 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "seeet",
+    "productName": "Seeet",
     "version": "0.0.0"
   },
   "tauri": {
