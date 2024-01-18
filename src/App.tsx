@@ -10,6 +10,7 @@ import reloadImg from '@/assets/img/reload.svg'
 import gsap from 'gsap'
 import animationData from '@/assets/lottie/explosion.json'
 import { Player } from '@lottiefiles/react-lottie-player'
+import clsx from 'clsx'
 
 const FILLINGS: ICard['filling'][] = ['SOLID', 'STRIPED', 'EMPTY']
 const COLORS: ICard['color'][] = ['GREEN', 'PURPLE', 'RED']
@@ -24,6 +25,7 @@ const App = () => {
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
   const pointsRef = useRef(null)
   const lottieRef = useRef<any>(null)
+  const [isDisabledHint, setIsDisabledHint] = useState(false)
 
   const init = () => {
     setDeck([])
@@ -219,16 +221,24 @@ const App = () => {
         >
           <img src={reloadImg} alt="Reload circle" />
         </button>
-        <button className="--clickable" onClick={addThreeCardsToBoard}>
-          <span>Add 3 cards</span>
-        </button>
         <button className="points" ref={pointsRef}>
           <img src={setImg} />
           <span>{doneSets}</span>
         </button>
-        <button className="points" ref={pointsRef}>
+        <button className="--clickable" onClick={addThreeCardsToBoard}>
+          <span>Add 3 cards</span>
+        </button>
+        <button
+          className={clsx('--clickable', isDisabledHint && '--hidden')}
+          ref={pointsRef}
+          onClick={() => setIsDisabledHint(!isDisabledHint)}
+        >
           <span>
-            {isThereASet(placedCards) ? 'Seeet présent' : 'Aucun Seeet présent'}
+            {isDisabledHint
+              ? 'Click to activate hint'
+              : isThereASet(placedCards)
+              ? 'Visible Seeet'
+              : 'No Seeet found'}
           </span>
         </button>
       </header>
