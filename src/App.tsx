@@ -260,7 +260,6 @@ const App = () => {
         </button>
         <button
           className={clsx('--clickable', isDisabledHint && '--hidden')}
-          ref={pointsRef}
           onClick={() => setIsDisabledHint(!isDisabledHint)}
         >
           <span>
