@@ -1,6 +1,6 @@
 import { ICard } from '@/core/types/Card'
 import '@/styles/main.scss'
-import { lazy, useEffect, useRef, useState } from 'react'
+import { lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { ALL_CARDS } from '@/core/data/cards'
 import shuffle from 'lodash.shuffle'
 import Card from '@/components/Card'
@@ -14,6 +14,17 @@ import isEqual from 'lodash.isequal'
 import { Howl } from 'howler'
 import selectCardSoundSrc from '@/assets/sounds/select-card.mp3'
 import winSeeetSoundSrc from '@/assets/sounds/win-seeet.mp3'
+import {
+  DndContext,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { SortableContext, arrayMove } from '@dnd-kit/sortable'
+import { createPortal } from 'react-dom'
 
 const FILLINGS: ICard['filling'][] = ['SOLID', 'STRIPED', 'EMPTY']
 const COLORS: ICard['color'][] = ['GREEN', 'PURPLE', 'RED']
@@ -36,6 +47,14 @@ const App = () => {
   const lottieRef = useRef<any>(null)
   const [isDisabledHint, setIsDisabledHint] = useState(false)
   const [isSoundOn, setIsSoundOn] = useState(true)
+  const placedCardsIds = useMemo(
+    () =>
+      placedCards.map(
+        (card) => `${card.color}-${card.shape}-${card.filling}-${card.size}`
+      ),
+    [placedCards]
+  )
+  const [activePlacedCard, setActivePlacedCard] = useState<ICard | null>(null)
 
   const selectCardSoundRef = new Howl({
     src: [selectCardSoundSrc],
@@ -220,27 +239,83 @@ const App = () => {
     }
   }, [selectedCards, placedCards, doneSets])
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3,
+      },
+    })
+  )
+
+  const onDragStart = (event: DragStartEvent) => {
+    setActivePlacedCard(null)
+
+    if (event.active.data.current?.type === 'Card') {
+      setActivePlacedCard(event.active.data.current.card)
+    }
+  }
+
+  const onDragOver = (event: DragOverEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = active.id
+    const overId = over.id
+
+    if (activeId === overId) return
+
+    setPlacedCards((placedCards) => {
+      const activeIndex = placedCards.findIndex(
+        (c) => `${c.color}-${c.shape}-${c.filling}-${c.size}` === activeId
+      )
+      const overIndex = placedCards.findIndex(
+        (c) => `${c.color}-${c.shape}-${c.filling}-${c.size}` === overId
+      )
+      return arrayMove(placedCards, activeIndex, overIndex)
+    })
+  }
+
   return (
     <div className="wrapper">
       <main>
-        <div
-          className="board"
-          style={{ ...getGridStyling(placedCards.length) }}
+        <DndContext
+          sensors={sensors}
+          onDragOver={onDragOver}
+          onDragStart={onDragStart}
         >
-          {placedCards.map((card, index) => (
-            <Card
-              key={index}
-              card={card}
-              onClick={() => handleCardClick(card)}
-              isSelected={selectedCards.includes(card)}
-              delay={
-                placedCards.length - index < 3
-                  ? (placedCards.length + index) % 3
-                  : 0
-              }
-            />
-          ))}
-        </div>
+          <div
+            className="board"
+            style={{ ...getGridStyling(placedCards.length) }}
+          >
+            <SortableContext items={placedCardsIds}>
+              {placedCards.map((card, index) => (
+                <Card
+                  key={index}
+                  card={card}
+                  onClick={() => handleCardClick(card)}
+                  isSelected={selectedCards.includes(card)}
+                  delay={
+                    placedCards.length - index < 3
+                      ? (placedCards.length + index) % 3
+                      : 0
+                  }
+                />
+              ))}
+            </SortableContext>
+          </div>
+          {createPortal(
+            <DragOverlay>
+              {activePlacedCard && (
+                <Card
+                  card={activePlacedCard}
+                  onClick={() => {}}
+                  isSelected={false}
+                />
+              )}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
       </main>
       <header>
         <button

@@ -171,6 +171,10 @@ main {
     }
   }
 
+  &.--low-opacity {
+    opacity: 0.6 !important;
+  }
+
   &__shapes {
     height: 100%;
     width: 100%;
