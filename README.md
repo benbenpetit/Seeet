@@ -1,5 +1,5 @@
 Windows : 
-[https://benoitpetit.fr/seeet-download.msi ](https://benoitpetit.fr/seeet-download.msi)
+[https://github.com/benbenpetit/seeet/releases/download/master/seeet-download.msi ](https://github.com/benbenpetit/seeet/releases/download/master/seeet-download.msi)
 
 Mac : 
-[https://benoitpetit.fr/seeet-download.dmg ](https://benoitpetit.fr/seeet-download.dmg)
+[https://github.com/benbenpetit/seeet/releases/download/master/seeet-download.dmg ](https://github.com/benbenpetit/seeet/releases/download/master/seeet-download.dmg)
