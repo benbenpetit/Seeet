@@ -5,3 +5,5 @@ Windows :
 
 Mac : 
 [https://github.com/benbenpetit/seeet/releases/download/master/seeet-download.dmg ](https://github.com/benbenpetit/seeet/releases/download/master/seeet-download.dmg)
+
+![](thumbnail.jpg)
